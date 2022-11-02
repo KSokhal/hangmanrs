@@ -16,7 +16,7 @@ fn main() {
 
     let mut finished = show_word(word.to_string(), &guessed_letters);
     
-    while finished == false {
+    while !finished {
         let mut i: String = get_letter();
         while i.len() != 1 {
             println!("{}", Red.paint("Only one letter can be entered at a time"));
@@ -53,12 +53,8 @@ fn get_letter() -> String {
     read!()
 }
 
-fn show_word(word: String, guesses_letters: &Vec<char>) -> bool{
+fn show_word(word: String, guesses_letters: &[char]) -> bool{
     let guessed_word: String = word.chars()
-    // .map(|x| match x {
-    //     guesses_letters => {x},
-    //     _ => {String::from("_").chars().next().unwrap()}
-    // })
     .map(|x| {
         if guesses_letters.contains(&x.to_ascii_lowercase()) {
             x
