@@ -13,20 +13,29 @@ use ansi_term::Colour::{Red, Green, Blue};
 fn main() {
     let mut guessed_letters = Vec::new();
     let word = get_random_word();
-
-    let mut finished = show_word(word.to_string(), &guessed_letters);
+    let mut guesses_left: usize = word.len() + 10;
     
-    while !finished {
-        let mut i: String = get_letter();
+    let mut correct = show_word(word.to_string(), &guessed_letters);
+    
+    while !correct {
+        if guesses_left ==0 {
+            break;
+        }
+        let mut i: String = get_letter(&guesses_left);
         while i.len() != 1 {
             println!("{}", Red.paint("Only one letter can be entered at a time"));
-            i = get_letter();
+            i = get_letter(&guesses_left);
         }
         let k: Vec<char> = i.chars().collect();
         guessed_letters.push(k[0].to_ascii_lowercase());
-        finished = show_word(word.to_string(), &guessed_letters);
+        correct = show_word(word.to_string(), &guessed_letters);
+        guesses_left -= 1;
     };
-    println!("{}", Green.paint("Correct!"))
+    if correct {
+        println!("{}", Green.paint("Correct!"));
+    } else {
+        println!("{}", Red.paint("No guesses left!"));
+    }
 }
 
 // The output is wrapped in a Result to allow matching on errors
@@ -48,8 +57,8 @@ fn get_random_word() -> String {
     String::from("default")
 }
 
-fn get_letter() -> String {
-    println!("Enter letter: ");
+fn get_letter(guesses_left: &usize) -> String {
+    println!("Enter letter ({} guesses left):", guesses_left);
     read!()
 }
 
