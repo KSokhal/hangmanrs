@@ -1,18 +1,17 @@
 use text_io::read;
-use std::{
-    fs::File,
-    io::{
-        self,
-        BufRead
-    },
-    path::Path
-};
-use rand::seq::SliceRandom;
 use ansi_term::Colour::{Red, Green, Blue};
+use serde::{Serialize, Deserialize};
+use reqwest::Error;
+
+#[derive(Deserialize, Serialize, Debug)]
+struct Word {
+    word: String,
+}
 
 fn main() {
-    let mut guessed_letters = Vec::new();
-    let word = get_random_word();
+    let word = get_random_word().expect("API request failed");
+
+    let mut guessed_letters: Vec<char> = Vec::new();
     let mut guesses_left: usize = word.len() + 10;
     
     let mut correct = show_word(word.to_string(), &guessed_letters);
@@ -34,34 +33,24 @@ fn main() {
     if correct {
         println!("{}", Green.paint("Correct!"));
     } else {
-        println!("{}", Red.paint("No guesses left!"));
+        println!("{}", Red.paint(format!("No guesses left!\nThe word was: {}", word)));
     }
 }
 
-// The output is wrapped in a Result to allow matching on errors
-// Returns an Iterator to the Reader of the lines of the file.
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where P: AsRef<Path>, {
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
+// Attempted to get a random word using a public API
+fn get_random_word() -> Result<String, Error> {
+    let word: Word = reqwest::blocking::get("https://random-word-api.herokuapp.com/word")?.json::<Word>()?;
+    Ok(word.word)
 }
 
-fn get_random_word() -> String {
-    let mut rng = rand::thread_rng();
-
-    if let Ok(lines) = read_lines("./words.txt") {
-        // Consumes the iterator, returns an (Optional) String
-        let words: Vec<String> = lines.map(|x| x.unwrap()).collect();
-        return words.choose(&mut rng).unwrap().to_string()
-    }
-    String::from("default")
-}
-
+// Asks the user for a letter and reads the reponse
 fn get_letter(guesses_left: &usize) -> String {
     println!("Enter letter ({} guesses left):", guesses_left);
     read!()
 }
 
+// Displays the word with any unknown characters replaced with an underscore
+// Returns true if there are no unknown characters
 fn show_word(word: String, guesses_letters: &[char]) -> bool{
     let guessed_word: String = word.chars()
     .map(|x| {
